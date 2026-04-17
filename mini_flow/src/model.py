@@ -10,6 +10,7 @@ class Miniflow(torch.nn.Module):
             nn.Linear(3,hdim),
             nn.GELU(),
             nn.Linear(hdim, hdim),
+            nn.Dropout(0.2),
             nn.GELU(),
             nn.Linear(hdim, 2)
         )

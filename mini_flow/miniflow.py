@@ -5,13 +5,14 @@ import argparse
 import yaml
 from src.model import Miniflow
 from src.dataset import MoonDataset
+from src.utils import show_field
 
 def main():
 
     # args
     wandb.init()
     parser = argparse.ArgumentParser(description="Miniflow arguments")
-    parser.add_argument("--config_path", type=str, default="./configs/miniflow.yaml")
+    parser.add_argument("--config_path", type=str, default="./mini_flow/configs/miniflow.yaml")
     args = parser.parse_args()
     config = yaml.safe_load(open(args.config_path))
     config["config_path"] = args.config_path
@@ -20,19 +21,23 @@ def main():
     # setup training
     data = MoonDataset(config)
     model = Miniflow(config).to("cuda")
-    optimizer = torch.optim.AdamW(lr=config["training"]["lr"],
-                                  params=model.parameters())
-    criterion = torch
+    optimizer = torch.optim.AdamW(lr=float(config["training"]["lr"]),
+                                  params=model.parameters(),)
     dataloader = torch.utils.data.DataLoader(dataset=data,
                                              shuffle=True,
-                                             batch_size=config["training"]["batch_size"],)
+                                             batch_size=config["training"]["batch_size"],
+                                             )
 
 
     # train
     model.to("cuda")
     for epoch in range(config["training"]["epochs"]):
+        # eval every 10th one
+        if epoch % 10 == 0:
+            show_field(model, epoch)
         # train velocity field
         epoch_loss = 0
+        n_samples = 0
         for x_1 in tqdm(dataloader, f"train epoch {epoch}"):
             x_1 = x_1.cuda()
             optimizer.zero_grad()
@@ -51,9 +56,10 @@ def main():
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
+            n_samples += b
 
-        wandb.log({"loss": epoch_loss})
-        print("loss:", epoch_loss)
+        wandb.log({"loss": epoch_loss / n_samples})
+        print("loss:", epoch_loss / n_samples)
     
     torch.save(model, f"./model_{epoch}_{epoch_loss:04.4f}.pth")
     pass
