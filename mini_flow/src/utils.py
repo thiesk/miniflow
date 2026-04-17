@@ -2,11 +2,11 @@ import torch
 import numpy as np
 import imageio
 import matplotlib.pyplot as plt
-def show_field(field, epoch, samples=100, grid_size=20, steps=100, fps=10, max_coord=3):
+def show_field(field, epoch, samples=1000, grid_size=20, steps=100, fps=10, max_coord=3):
 
     frames = []
     # prepare position data
-    pos_x_t = torch.randn((100,2), device="cuda")
+    pos_x_t = torch.randn((samples,2), device="cuda")
 
     # grid coord data
     x = torch.linspace(-max_coord,max_coord,grid_size)
@@ -14,7 +14,7 @@ def show_field(field, epoch, samples=100, grid_size=20, steps=100, fps=10, max_c
     grid_x, grid_y = torch.meshgrid(x, y, indexing='ij')
 
     # compute for all timesteps
-    for step in range(steps+20):
+    for step in range(steps+int(steps*0.2)):
         # prepare data for field visual
         vel_x_t = torch.stack([grid_x.flatten(), grid_y.flatten()], dim=1).to("cuda")
 
@@ -38,7 +38,7 @@ def show_field(field, epoch, samples=100, grid_size=20, steps=100, fps=10, max_c
         # plotting frame
         fig, ax = plt.subplots(figsize=(8, 8))
         ax.quiver(grid_x.numpy(), grid_y.numpy(), vels[:, 0], vels[:, 1], color='blue')
-        ax.scatter(pos_x_t[:, 0].cpu(), pos_x_t[:, 1].cpu(), s=5, alpha=0.5, c='green')
+        ax.scatter(pos_x_t[:, 0].cpu(), pos_x_t[:, 1].cpu(), s=2, alpha=0.5, c='green')
         ax.set_title(f"Velocity Field t={time}")
         ax.set_xlim(-max_coord, max_coord)
         ax.set_ylim(-max_coord, max_coord)
